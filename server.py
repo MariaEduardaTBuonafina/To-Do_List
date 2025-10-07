@@ -10,9 +10,8 @@ DB_PATH = 'tasks.db'
 HOST = '0.0.0.0'
 PORT = 8000
 
-
+# criar a tabela caso n exista
 def init_db():
-    """Cria a tabela 'tarefas' caso não exista."""
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute('''
@@ -27,18 +26,17 @@ def init_db():
     conn.commit()
     conn.close()
 
-
+# manipulador principal das rotas HTTP /tasks e /tasks/<id>.
 class TaskHandler(BaseHTTPRequestHandler):
-    """Manipulador principal das rotas HTTP /tasks e /tasks/<id>."""
 
+# add cabeçalhos CORS para compatibilidade com navegadores
     def _send_cors_headers(self):
-        """Adiciona cabeçalhos CORS para compatibilidade com navegadores."""
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
 
+# resposta json padronizada de requisicao
     def send_json(self, obj, status=200):
-        """Envia uma resposta JSON padronizada."""
         if status == 204:
             self.send_response(204)
             self._send_cors_headers()
@@ -51,8 +49,8 @@ class TaskHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(obj, ensure_ascii=False).encode('utf-8'))
 
+# extrai e valida o ID da URL (se tiver)
     def _parse_id(self):
-        """Extrai e valida o ID da URL, se houver."""
         m = re.match(r'^/tasks(?:/(\d+))?/?$', self.path)
         if not m:
             return None, {'error': 'Rota não encontrada'}, 404
@@ -64,8 +62,8 @@ class TaskHandler(BaseHTTPRequestHandler):
                 return None, {'error': 'ID inválido'}, 400
         return None, None, None
 
+# valida se o content-type é JSON e retorna o corpo decodificado
     def _require_json(self):
-        """Valida se o Content-Type é JSON e retorna o corpo decodificado."""
         ct = self.headers.get('Content-Type', '')
         if 'application/json' not in ct:
             self.send_json({'error': 'Content-Type deve ser application/json'}, 400)
@@ -78,8 +76,8 @@ class TaskHandler(BaseHTTPRequestHandler):
             self.send_json({'error': 'JSON inválido'}, 400)
             return None
 
+# bloco q executa comandos sql com retentativa em caso de 'database locked'
     def _execute(self, sql, params=(), commit=False, fetchone=False, fetchall=False, retry=3):
-        """Executa comandos SQL com retentativa em caso de 'database locked'."""
         for attempt in range(retry):
             try:
                 conn = sqlite3.connect(DB_PATH)
@@ -102,14 +100,14 @@ class TaskHandler(BaseHTTPRequestHandler):
                 else:
                     raise
 
+# responde pré-voos de CORS
     def do_OPTIONS(self):
-        """Responde pré-voos de CORS."""
         self.send_response(204)
         self._send_cors_headers()
         self.end_headers()
 
+# lista todas as tarefas ou retorna uma específica
     def do_GET(self):
-        """Lista todas as tarefas ou retorna uma específica."""
         task_id, err, code = self._parse_id()
         if err:
             self.send_json(err, code)
@@ -137,7 +135,6 @@ class TaskHandler(BaseHTTPRequestHandler):
             self.send_json({'error': 'Erro interno ao consultar tarefas'}, 500)
 
     def do_POST(self):
-        """Cria uma nova tarefa."""
         if not re.match(r'^/tasks/?$', self.path):
             self.send_json({'error': 'Rota não encontrada'}, 404)
             return
@@ -170,7 +167,6 @@ class TaskHandler(BaseHTTPRequestHandler):
             self.send_json({'error': 'Erro interno ao criar tarefa'}, 500)
 
     def do_PUT(self):
-        """Atualiza parcialmente uma tarefa."""
         task_id, err, code = self._parse_id()
         if err:
             self.send_json(err, code)
@@ -209,7 +205,6 @@ class TaskHandler(BaseHTTPRequestHandler):
             self.send_json({'error': 'Erro interno ao atualizar tarefa'}, 500)
 
     def do_DELETE(self):
-        """Remove uma tarefa pelo ID."""
         task_id, err, code = self._parse_id()
         if err:
             self.send_json(err, code)

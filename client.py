@@ -8,27 +8,27 @@ def main():
     parser.add_argument("--server", "-s", default="http://localhost:8000", help="URL base do servidor")
     sub = parser.add_subparsers(dest="cmd")
 
-    # CREATE
+    # req create
     p_create = sub.add_parser("create", help="Criar nova tarefa")
     p_create.add_argument("--titulo", "-t", required=True)
     p_create.add_argument("--descricao", "-d", default="")
     p_create.add_argument("--status", default="pendente")
 
-    # LIST
+    # mostra lista
     p_list = sub.add_parser("list", help="Listar todas as tarefas")
 
-    # GET
+    # req get
     p_get = sub.add_parser("get", help="Obter tarefa pelo ID")
     p_get.add_argument("id", type=int)
 
-    # UPDATE
+    # req update
     p_update = sub.add_parser("update", help="Atualizar tarefa")
     p_update.add_argument("id", type=int)
     p_update.add_argument("--titulo", default=None)
     p_update.add_argument("--descricao", default=None)
     p_update.add_argument("--status", default=None)
 
-    # DELETE
+    # req delete
     p_delete = sub.add_parser("delete", help="Remover tarefa")
     p_delete.add_argument("id", type=int)
 
@@ -81,9 +81,9 @@ def main():
                 print("Tarefa removida com sucesso.")
 
     except requests.exceptions.ConnectionError:
-        print("❌ Erro: não foi possível conectar ao servidor.")
+        print("Erro: não foi possível conectar ao servidor.")
     except requests.exceptions.RequestException as e:
-        print("❌ Erro durante a requisição:", e)
+        print("Erro durante a requisição:", e)
 
 
 if __name__ == "__main__":
